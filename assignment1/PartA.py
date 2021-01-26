@@ -70,7 +70,7 @@ def read_file(_file, prnt=True, prnt_top=0, size=1024):
                 = O(n) + O(1) + O(nlogn) = O(nlogn)
        """
     freq_dict = {} # used to store the frequencies
-    with open(_file) as f:
+    with open(_file, encoding='utf8') as f:
         for chunk in read_chunks(f, size):
             words = tokenize(chunk)
             compute_word_frequencies(freq_dict, words)

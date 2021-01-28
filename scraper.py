@@ -11,9 +11,6 @@ def extract_next_links(url, resp):
     # List of links to return
     links = list()
 
-    # Do we need to check to see if `url` is in the ics.uci.edu domain?
-    # Or should the check happen somewhere else in the program, like `download.py`?
-
     # Check the status integer
     #   status 200-399: OK, use the html retrieved in resp.raw_response.content to return list of links
     #   status 400-599: HTTP ERROR, use resp.raw_response to report the error and return empty list
@@ -22,7 +19,13 @@ def extract_next_links(url, resp):
     # Response status OK, retrieve the links and add them
     if 200 <= resp.status < 400:
         # TODO: get the links from the http response and add them to the list
-        # We're going to use the "is_valid()" function here to check links before adding them to the list
+
+        # PSEUDOCODE
+        # Parse resp.raw_response.content for the links in the webpage
+        #   (will this use the text processor from Assignment 1?)
+        # Remove invalid links from the list
+        # Return the list
+
         links = list()
 
     # A standard http error has occurred
@@ -40,8 +43,13 @@ def extract_next_links(url, resp):
 def is_valid(url):
     try:
         parsed = urlparse(url)
+        # Only allow http schemes
         if parsed.scheme not in {"http", "https"}:
             return False
+        # Only allow url's that have this hostname
+        if "ics.uci.edu" not in parsed.hostname:
+            return False
+        # Remove non-webpage links
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"

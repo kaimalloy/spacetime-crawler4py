@@ -1,9 +1,11 @@
 import re
 from urllib.parse import urlparse
 
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
+
 
 def extract_next_links(url, resp):
     # TODO: Implement function to extract the next link.
@@ -40,15 +42,28 @@ def extract_next_links(url, resp):
 
     return links
 
+
 def is_valid(url):
+    # List of valid hostnames
+    valid_hostnames = [
+        "ics.uci.edu",
+        "cs.uci.edu",
+        "informatics.uci.edu",
+        "stat.uci.edu"
+    ]
+
     try:
         parsed = urlparse(url)
+
         # Only allow http schemes
         if parsed.scheme not in {"http", "https"}:
             return False
-        # Only allow url's that have this hostname
-        if "ics.uci.edu" not in parsed.hostname:
+
+        # Only allow urls that have valid hostname and path
+        if not len([hostname for hostname in valid_hostnames if hostname in parsed.hostname]) and \
+                "today.uci.edu/department/information_computer_sciences" not in url:
             return False
+
         # Remove non-webpage links
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -63,4 +78,3 @@ def is_valid(url):
     except TypeError:
         print("TypeError for ", parsed)
         raise
-

@@ -32,8 +32,6 @@ def extract_next_links(url, resp):
                 if is_valid(link['href']):
                     links.append(link['href'])
 
-        # Check for re
-
         # Check for duplicates (checks overlap between two files)
         #   USE simhash
         pass
@@ -84,5 +82,5 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
-        print("TypeError for ", parsed)
+        print("TypeError for", url)
         raise

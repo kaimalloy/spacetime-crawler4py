@@ -28,13 +28,15 @@ def extract_next_links(url, resp):
         #   USE BeautifulSoup
         for link in BeautifulSoup(resp.raw_response.content, parse_only=SoupStrainer('a')):
             if link.has_attr('href'):
-                # Check if the href is a relative link and convert to absolute link before passing into "is valid"
-                if is_valid(link['href']):
-                    links.append(link['href'])
 
-        # Check for duplicates (checks overlap between two files)
-        #   USE simhash
-        pass
+                href = urlparse(link['href'])
+
+                # If netloc is false, the href is relative: add the href to the end of the url
+                if not href.netloc:
+                    href = url + "/" + href
+
+                if is_valid(href, resp):
+                    links.append(href)
 
     # A standard http error has occurred
     elif 400 <= resp.status < 600:
@@ -49,7 +51,7 @@ def extract_next_links(url, resp):
     return links
 
 
-def is_valid(url):
+def is_valid(url, resp):
     # List of valid hostnames
     valid_hostnames = [
         "ics.uci.edu",
@@ -69,6 +71,8 @@ def is_valid(url):
         if not len([host for host in valid_hostnames if host in parsed.hostname]) and \
                 "today.uci.edu/department/information_computer_sciences" not in url:
             return False
+
+        # Check if the url is too similar to the response content
 
         # Remove non-webpage links
         return not re.match(

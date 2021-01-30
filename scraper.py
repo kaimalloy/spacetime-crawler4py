@@ -29,11 +29,12 @@ def extract_next_links(url, resp):
         for link in BeautifulSoup(resp.raw_response.content, parse_only=SoupStrainer('a')):
             if link.has_attr('href'):
 
-                href = urlparse(link['href'])
-
-                # If netloc is false, the href is relative: add the href to the end of the url
-                if not href.netloc:
-                    href = url + "/" + href
+                href = link['href']
+                # href = urlparse(link['href'])
+                #
+                # # If netloc is false, the href is relative: add the href to the end of the url
+                # if not href.netloc:
+                #     href = url + "/" + href
 
                 if is_valid(href, resp):
                     links.append(href)

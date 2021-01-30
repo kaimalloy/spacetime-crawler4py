@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup, SoupStrainer
 
 
 def scraper(url, resp):
@@ -25,9 +26,10 @@ def extract_next_links(url, resp):
         # PSEUDOCODE
         # Parse resp.raw_response.content for the links in the webpage
         #   USE BeautifulSoup
-
-        # Remove invalid links from the list
-        #   USE is_valid
+        for link in BeautifulSoup(resp.raw_response.content, parse_only=SoupStrainer('a')):
+            if link.has_attr('href'):
+                if is_valid(link['href']):
+                    links.append(link['href'])
 
         # Check for duplicates (checks overlap between two files)
         #   USE simhash

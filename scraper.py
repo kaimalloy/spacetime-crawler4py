@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup, SoupStrainer
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link, resp)]
+    return [link for link in links if is_valid(link)]
 
 
 def extract_next_links(url, resp):
@@ -25,7 +25,7 @@ def extract_next_links(url, resp):
     return links
 
 
-def is_valid(url, resp):
+def is_valid(url):
     # List of valid hostnames
     valid_hostnames = [
         "ics.uci.edu",

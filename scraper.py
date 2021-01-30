@@ -16,7 +16,7 @@ def extract_next_links(url, resp):
     if 200 <= resp.status < 400:
         soup = BeautifulSoup(resp.raw_response.content)
 
-        # TODO: check if this page has good information content
+        # TODO: check if this page has good information content (<200 words will be discarded)
 
         for link in soup.find_all('a'):
             if link.has_attr('href'):
@@ -42,7 +42,7 @@ def is_valid(url):
             return False
 
         # Only allow urls that have valid hostname and path
-        if not len([host for host in valid_hostnames if host in parsed.hostname]) and \
+        if not any([host in url for host in valid_hostnames]) and \
                 "today.uci.edu/department/information_computer_sciences" not in url:
             return False
 

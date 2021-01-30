@@ -28,8 +28,11 @@ def extract_next_links(url, resp):
         #   USE BeautifulSoup
         for link in BeautifulSoup(resp.raw_response.content, parse_only=SoupStrainer('a')):
             if link.has_attr('href'):
+                # Check if the href is a relative link and convert to absolute link before passing into "is valid"
                 if is_valid(link['href']):
                     links.append(link['href'])
+
+        # Check for re
 
         # Check for duplicates (checks overlap between two files)
         #   USE simhash

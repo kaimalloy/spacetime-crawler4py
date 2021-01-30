@@ -14,23 +14,13 @@ def extract_next_links(url, resp):
 
     # Response status OK, retrieve the links and add them
     if 200 <= resp.status < 400:
-        soup = BeautifulSoup(resp.raw_response.content, parser='html.parser')
+        soup = BeautifulSoup(resp.raw_response.content)
 
         # TODO: check if this page has good information content
 
         for link in soup.find_all('a'):
             if link.has_attr('href'):
                 links.append(link.get('href'))
-
-    # A standard http error has occurred
-    elif 400 <= resp.status < 600:
-        # TODO: report the http error
-        pass
-
-    # A server caching error has occurred
-    else:
-        # TODO: report the server caching error
-        pass
 
     return links
 

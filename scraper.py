@@ -57,7 +57,8 @@ def is_valid(url, resp):
         "ics.uci.edu",
         "cs.uci.edu",
         "informatics.uci.edu",
-        "stat.uci.edu"
+        "stat.uci.edu",
+        "codeyhuntting.repl.co"
     ]
 
     try:

@@ -16,7 +16,7 @@ def extract_next_links(url, resp):
     # Check the status integer
     #   status 200-399: OK, use the html retrieved in resp.raw_response.content to return list of links
     #   status 400-599: HTTP ERROR, use resp.raw_response to report the error and return empty list
-    #   status 600-609: CACHING ERROR, use resp.error to report the error
+    #   status 600-609: CACHING ERROR, use resp.error to report the error and return empty list
 
     # Response status OK, retrieve the links and add them
     if 200 <= resp.status < 400:
@@ -24,11 +24,14 @@ def extract_next_links(url, resp):
 
         # PSEUDOCODE
         # Parse resp.raw_response.content for the links in the webpage
-        #   (will this use the text processor from Assignment 1?)
-        # Remove invalid links from the list
-        # Return the list
+        #   USE BeautifulSoup
 
-        links = list()
+        # Remove invalid links from the list
+        #   USE is_valid
+
+        # Check for duplicates (checks overlap between two files)
+        #   USE simhash
+        pass
 
     # A standard http error has occurred
     elif 400 <= resp.status < 600:
@@ -60,7 +63,7 @@ def is_valid(url):
             return False
 
         # Only allow urls that have valid hostname and path
-        if not len([hostname for hostname in valid_hostnames if hostname in parsed.hostname]) and \
+        if not len([host for host in valid_hostnames if host in parsed.hostname]) and \
                 "today.uci.edu/department/information_computer_sciences" not in url:
             return False
 

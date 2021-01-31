@@ -52,7 +52,7 @@ def frequencies(token_dict):
         print(f'{pair[0]} {pair[1]}')
    
 
-token_list = tokenize(1)
-token_dict = computeWordFrequencies(token_list)
-frequencies(token_dict)
-
+if __name__ == "__main__":
+    token_list = tokenize(1)
+    token_dict = computeWordFrequencies(token_list)
+    frequencies(token_dict)

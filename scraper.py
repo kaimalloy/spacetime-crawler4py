@@ -2,6 +2,17 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, SoupStrainer
 
+stopwords = [
+    'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very',
+    'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most',
+    'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until',
+    'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself',
+    'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no',
+    'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves',
+    'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you',
+    'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't',
+    'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'
+]
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -16,11 +27,15 @@ def extract_next_links(url, resp):
     if 200 <= resp.status < 400:
         soup = BeautifulSoup(resp.raw_response.content)
 
-        # TODO: check if this page has good information content (<200 words will be discarded)
+        # Count the words in the soup, excluding stop words (we could also use our tokenizer here, but this works too)
+        words = re.findall(r'\w+', soup.get_text())
+        words = [w for w in words if w not in stopwords]
 
-        for link in soup.find_all('a'):
-            if link.has_attr('href'):
-                links.append(link.get('href'))
+        # Only hunt the links down if there are more than 200 words
+        if len(words) > 200:
+            for link in soup.find_all('a'):
+                if link.has_attr('href'):
+                    links.append(link.get('href'))
 
     return links
 

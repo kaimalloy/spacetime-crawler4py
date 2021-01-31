@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
-from bs4 import BeautifulSoup, SoupStrainer
+from bs4 import BeautifulSoup
+from tokenizer import PartA as tk
 
 stopwords = [
     'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very',
@@ -14,6 +15,8 @@ stopwords = [
     'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'
 ]
 
+web_fingerprints = []
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
@@ -25,14 +28,29 @@ def extract_next_links(url, resp):
 
     # Response status OK, retrieve the links and add them
     if 200 <= resp.status < 400:
+        # Build the soup of the HTML content
         soup = BeautifulSoup(resp.raw_response.content)
 
         # Count the words in the soup, excluding stop words (we could also use our tokenizer here, but this works too)
-        words = re.findall(r'\w+', soup.get_text())
+        words = tk.tokenize(soup.get_text())
         words = [w for w in words if w not in stopwords]
 
-        # Only hunt the links down if there are more than 200 words
         if len(words) > 200:
+            # Create the fingerprint of the website
+            fingerprint = simhash(words)
+            print("Generated fingerprint for url", url, ":", fingerprint)
+
+            for fprint in web_fingerprints:
+                # If this website is too similar to another website in the list,
+                # return an empty list of links
+                if bitwise_similarity(fingerprint, fprint) > 0.95:
+                    web_fingerprints.append(fingerprint)
+                    return links
+
+            # Append the fingerprint to the list
+            web_fingerprints.append(fingerprint)
+
+            # Append all links to the list of links to return
             for link in soup.find_all('a'):
                 if link.has_attr('href'):
                     links.append(link.get('href'))
@@ -61,8 +79,6 @@ def is_valid(url):
                 "today.uci.edu/department/information_computer_sciences" not in url:
             return False
 
-        # TODO: Check if the html at the url is too similar to the response content
-
         # Remove non-webpage links
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -77,3 +93,55 @@ def is_valid(url):
     except TypeError:
         print("TypeError for", url)
         raise
+
+def simhash(tokens):
+    weight_dict = tk.computeWordFrequencies(tokens)
+
+    bin_dict = {}
+    vector = []
+    fingerprint = ""
+
+    for key in weight_dict:
+        # Add the binary version of the key to the dictionary
+        bin_dict[key] = bin(hash(key))
+
+        # Check if the word is too short
+        if len(bin_dict[key]) < 32:
+            raise Exception("Binary value for word " + key + " is less than 32 bits!")
+
+        # Take only 32 bits
+        bin_dict[key] = bin_dict[key][0:31]
+
+        # Replace negative and b with 0
+        bin_dict[key] = bin_dict[key].replace('-', '0')
+        bin_dict[key] = bin_dict[key].replace('b', '0')
+
+    # Iterate over all the keys in the dictionary
+    for key in weight_dict:
+        # Iterate over all the bits in the binary strings
+        for i in range(32):
+            # Add the word's weight if the current bit is true, and subtract if it is false
+            if bin_dict[key][i]:
+                vector[i] += weight_dict[key]
+            else:
+                vector[i] -= weight_dict[key]
+
+    # Iterate over the vector.  For each positive number, add a 1 to the fingerprint, and each negative add a zero
+    for i in range(32):
+        if vector[i] > 0:
+            fingerprint += '1'
+        else:
+            fingerprint += '0'
+
+    return fingerprint
+
+# Check how similar two strings are
+def bitwise_similarity(bstr1, bstr2):
+    if len(bstr1) != len(bstr2):
+        return 0
+
+    summation = 0
+    for i in range(len(bstr1)):
+        summation += bstr1[i] != bstr2[i]
+
+    return summation / len(bstr1)

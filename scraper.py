@@ -115,7 +115,7 @@ def simhash(tokens):
             bin_dict[key] += "0" * 32
 
         # Take only 32 bits
-        bin_dict[key] = bin_dict[key][0:31]
+        bin_dict[key] = bin_dict[key][0:32]
 
         # Replace negative and b with 0
         bin_dict[key] = bin_dict[key].replace('-', '0')

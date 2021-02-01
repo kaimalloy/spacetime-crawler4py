@@ -4,17 +4,10 @@ import re
 
 # opens text file and look at each char, reconstructs text and returns a list of tokens. 
 # runtime: O(n^2) as there is a double for loop checking the validity of each char.
-def tokenize(i):
+def tokenize(s):
 
-    f = open(sys.argv[i], encoding = 'utf8')
-
-    tokens = []
+    tokens = re.split(r'[^\w\d]+', s)
     raw_tokens = []
-
-    for line in f:
-        for i in line.split():
-            text = i.strip("\n")
-            raw_tokens.append(text)
 
     for text in raw_tokens:
         temp = ''

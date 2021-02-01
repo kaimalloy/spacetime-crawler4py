@@ -147,6 +147,7 @@ def bitwise_similarity(bstr1, bstr2):
 
     summation = 0
     for i in range(len(bstr1)):
-        summation += bstr1[i] != bstr2[i]
+        if bstr1[i] == bstr2[i]:
+            summation += 1
 
     return summation / len(bstr1)

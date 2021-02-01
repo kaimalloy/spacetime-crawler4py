@@ -45,7 +45,10 @@ def extract_next_links(url, resp):
                 # return an empty list of links
                 if bitwise_similarity(fingerprint, fprint) > 0.95:
                     web_fingerprints.append(fingerprint)
+                    print("SKIPPED website", url, "because it was too similar to a website that was already crawled")
                     return links
+
+            print("SCRAPING website", url, " for the links")
 
             # Append the fingerprint to the list
             web_fingerprints.append(fingerprint)

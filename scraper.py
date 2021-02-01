@@ -125,16 +125,11 @@ def simhash(tokens):
     for key in weight_dict:
         # Iterate over all the bits in the binary strings
         for i in range(32):
-            try:
-                # Add the word's weight if the current bit is true, and subtract if it is false
-                if bin_dict[key][i]:
-                    vector[i] += weight_dict[key]
-                else:
-                    vector[i] -= weight_dict[key]
-            except IndexError:
-                print("Index error for binary string:", bin_dict[key])
-                print("Index:", i)
-                raise
+            # Add the word's weight if the current bit is true, and subtract if it is false
+            if bin_dict[key][i] is "1":
+                vector[i] += weight_dict[key]
+            else:
+                vector[i] -= weight_dict[key]
 
     # Iterate over the vector.  For each positive number, add a 1 to the fingerprint, and each negative add a zero
     for i in range(32):

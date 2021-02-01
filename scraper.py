@@ -107,7 +107,9 @@ def simhash(tokens):
 
         # Check if the word is too short
         if len(bin_dict[key]) < 32:
-            raise Exception("Binary value for word " + key + " is less than 32 bits!")
+            # TODO: this could be a problem - if too many binary strings have a bunch of zeroes appended to the end
+            # then they might match as similar to another one that is not really that "similar"
+            bin_dict[key] += "0" * (32 - len(bin_dict[key]))
 
         # Take only 32 bits
         bin_dict[key] = bin_dict[key][0:31]

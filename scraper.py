@@ -98,7 +98,7 @@ def simhash(tokens):
     weight_dict = tk.computeWordFrequencies(tokens)
 
     bin_dict = {}
-    vector = []
+    vector = [0 for i in range(32)]
     fingerprint = ""
 
     for key in weight_dict:

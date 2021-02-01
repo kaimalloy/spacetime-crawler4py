@@ -6,8 +6,8 @@ import re
 # runtime: O(n^2) as there is a double for loop checking the validity of each char.
 def tokenize(s):
 
-    tokens = re.split(r'[^\w\d]+', s)
-    raw_tokens = []
+    tokens = []
+    raw_tokens = re.split(r'[^\w\d]+', s)
 
     for text in raw_tokens:
         temp = ''

@@ -105,11 +105,14 @@ def simhash(tokens):
         # Add the binary version of the key to the dictionary
         bin_dict[key] = bin(hash(key))
 
+        if "1" not in bin_dict[key]:
+            print("Got the zero string for input:", key)
+
         # Check if the word is too short
         if len(bin_dict[key]) < 32:
             # TODO: this could be a problem - if too many binary strings have a bunch of zeroes appended to the end
             # then they might match as similar to another one that is not really that "similar"
-            bin_dict[key] += "0" * (32 - len(bin_dict[key]))
+            bin_dict[key] += "0" * 32
 
         # Take only 32 bits
         bin_dict[key] = bin_dict[key][0:31]

@@ -104,6 +104,7 @@ def simhash(tokens):
     for key in weight_dict:
         # Add the binary version of the key to the dictionary
         bin_dict[key] = bin(hash(key))
+        print("Init value:", bin_dict[key])
 
         # Check if the word is too short
         if len(bin_dict[key]) < 32:
@@ -111,12 +112,16 @@ def simhash(tokens):
             # then they might match as similar to another one that is not really that "similar"
             bin_dict[key] += "0" * (32 - len(bin_dict[key]))
 
+        print("After size correction:", bin_dict[key])
+
         # Take only 32 bits
         bin_dict[key] = bin_dict[key][0:31]
+        print("After index slice:", bin_dict[key])
 
         # Replace negative and b with 0
         bin_dict[key] = bin_dict[key].replace('-', '0')
         bin_dict[key] = bin_dict[key].replace('b', '0')
+        print("After character replace:", bin_dict[key])
 
     # Iterate over all the keys in the dictionary
     for key in weight_dict:

@@ -33,7 +33,7 @@ class Worker(Thread):
                 self.sites_crawled += 1
                 if self.sites_crawled >= 100:
                     self.sites_crawled = 0
-                    self.logger("Downloaded 100 sites. Generating a report-so-far")
+                    self.logger.info("Downloaded 100 sites. Generating a report-so-far")
                     final_report()
 
                 for scraped_url in scraped_urls:
@@ -42,6 +42,6 @@ class Worker(Thread):
                 time.sleep(self.config.time_delay)
             except Exception:
                 # If the crawler runs into any exception, spit out the final report before re-raising the exception
-                self.logger("Worker caught an exception. Generating final report before exit.")
+                self.logger.info("Worker caught an exception. Generating final report before exit.")
                 final_report()
                 raise

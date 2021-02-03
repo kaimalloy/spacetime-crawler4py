@@ -1,7 +1,8 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 from tokenizer import PartA as tk
+import os
 
 stopwords = [
     'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very',
@@ -15,48 +16,92 @@ stopwords = [
     'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'
 ]
 
+# This is a list of the fingerprints of the websites visited
 web_fingerprints = []
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
+# This is a list of every url that has been visited
+# Only the BASE url is saved.  The query parameters and fragments are cut off
+urls_visited = []
+
+# Track the largest webpage.
+# This is a tuple where the first element is the website name
+# and the second element is the number of words in the website (excluding stop words)
+largest_webpage = ["", 0]
+
+# This will pair each word with the number of times it has been found in the webpages crawled
+words_found = {}
+
+
+def scraper(url, resp, logger):
+    links = extract_next_links(url, resp, logger)
     return [link for link in links if is_valid(link)]
 
 
-def extract_next_links(url, resp):
+def extract_next_links(url, resp, logger):
     # List of links to return
     links = list()
 
     # Response status OK, retrieve the links and add them
     if 200 <= resp.status < 400:
+        # Add the base version of this url to the list of urls visited
+        urls_visited.append(url)
+
         # Build the soup of the HTML content
         soup = BeautifulSoup(resp.raw_response.content)
 
-        # Count the words in the soup, excluding stop words (we could also use our tokenizer here, but this works too)
+        # Tokenize the words in the soup and count them
         words = tk.tokenize(soup.get_text())
         words = [w for w in words if w not in stopwords]
+        num_words = len(words)
 
-        if len(words) > 200:
+        if 200 <= num_words < 90000:
             # Create the fingerprint of the website
             fingerprint = simhash(words)
-            print("Generated fingerprint for url", url, ":", fingerprint)
+            logger.info("SCRAPER - Generated fingerprint for url", url, ":", fingerprint)
 
             for fprint in web_fingerprints:
                 # If this website is too similar to another website in the list,
                 # return an empty list of links
                 if bitwise_similarity(fingerprint, fprint) > 0.95:
                     web_fingerprints.append(fingerprint)
-                    print("SKIPPED website", url, "because it was too similar to a website that was already crawled")
+                    logger.info("SCRAPER - SKIPPED website", url,
+                                "because it was too similar to a website that was already crawled")
                     return links
 
-            print("SCRAPING website", url, " for the links")
+            logger.info("SCRAPER - SCRAPING website", url, " for the links")
+
+            # Loop through the words and increment the times the word occurs
+            for w in words:
+                # If the word has already been found, increment it
+                if w in words_found:
+                    words_found[w] += 1
+                # If this is the first time we found the word, set it to 1
+                else:
+                    words_found[w] = 1
+
+            # Update the largest webpage found, if necessary
+            if num_words > largest_webpage[1]:
+                largest_webpage[0] = url
+                largest_webpage[1] = num_words
+                logger.info("SCRAPER - updating largest website to", url, "with", num_words, "words")
 
             # Append the fingerprint to the list
             web_fingerprints.append(fingerprint)
 
             # Append all links to the list of links to return
             for link in soup.find_all('a'):
+                # Check to be sure the link has an href attribute
                 if link.has_attr('href'):
-                    links.append(link.get('href'))
+                    # Cut query parameters and fragments out of the href attribute value
+                    href = base_url(link.get('href'))
+
+                    # Check to make sure this link has not been crawled already
+                    if href not in urls_visited:
+                        links.append(href)
+        else:
+            logger.info("SCRAPER - SKIPPED website", url, "because the website was either too big or too small")
+    else:
+        logger.info("SCRAPER - SKIPPED website", url, "because the server returned error code <" + resp.status + ">")
 
     return links
 
@@ -83,6 +128,7 @@ def is_valid(url):
             return False
 
         # Remove non-webpage links
+        # NOTE: this does not seem to be filtering out all pdfs
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -91,12 +137,15 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
+            + r"|json|sql|ova|apk)$", parsed.path.lower())
 
     except TypeError:
         print("TypeError for", url)
         raise
 
+# Given a list of strings, compute a 32 bit binary string that represents
+# a "good enough" approximation of the words in the list
 def simhash(tokens):
     weight_dict = tk.computeWordFrequencies(tokens)
 
@@ -108,12 +157,9 @@ def simhash(tokens):
         # Add the binary version of the key to the dictionary
         bin_dict[key] = bin(hash(key))
 
-        if "1" not in bin_dict[key]:
-            print("Got the zero string for input:", key)
-
         # Check if the word is too short
         if len(bin_dict[key]) < 32:
-            # TODO: this could be a problem - if too many binary strings have a bunch of zeroes appended to the end
+            # NOTE: this could be a problem - if too many binary strings have a bunch of zeroes appended to the end
             # then they might match as similar to another one that is not really that "similar"
             bin_dict[key] += "0" * 32
 
@@ -143,6 +189,7 @@ def simhash(tokens):
 
     return fingerprint
 
+
 # Check how similar two strings are
 def bitwise_similarity(bstr1, bstr2):
     if len(bstr1) != len(bstr2):
@@ -154,3 +201,81 @@ def bitwise_similarity(bstr1, bstr2):
             summation += 1
 
     return summation / len(bstr1)
+
+
+def base_url(url):
+    # Remove parameters, queries, and fragments from the url
+    url = list(urlparse(url))
+    url[3] = url[4] = url[5] = ""
+    url = urlunparse(url)
+
+    # Make sure that none of the urls end with a slash
+    if url.endswith("/"):
+        return url.rstrip("/")
+
+    return url
+
+
+# Return a sorted list of tuples where the hostname is associated with the number of paths of that site visited
+def compute_subdomain_visits(domain):
+    # Dictionary pairs the hostname with the number of times that it was visited
+    visits = {}
+
+    # Append all unique hostnames to the list
+    for url in urls_visited:
+        parsed = urlparse(url)
+
+        # Check if the desired domain is in the hostname of the current url
+        if domain in parsed.hostname:
+            # If the hostname is already in visits, increment the number
+            if parsed.hostname in visits:
+                visits[parsed.hostname] += 1
+            # If the hostname is not in visits, this is the first appearance, so set it to 1
+            else:
+                visits[parsed.hostname] = 1
+
+    # [ (acar.ics.uci.edu, 4) , (bell.ics.uci.edu, 6) ]
+    return sorted(visits)
+
+def final_report():
+    f = open("report.txt", "w")
+
+    # Write the number of pages crawled
+    f.write("Unique pages crawled: " + str(len(urls_visited)))
+    f.write(os.linesep)
+    f.write(os.linesep)
+
+    # Write the info for the longest webpage crawled
+    f.write("Longest page:")
+    f.write(os.linesep)
+    f.write("url - " + largest_webpage[0])
+    f.write(os.linesep)
+    f.write("words - " + largest_webpage[1])
+    f.write(os.linesep)
+    f.write(os.linesep)
+
+    # Write out the 50 most common words
+    f.write("List of 50 most common words:")
+    f.write(os.linesep)
+
+    # Sort the list by the values, and output the first 50
+    sorted_words = sorted(words_found.items(), key=lambda kv: kv[1])
+    for i in range(50):
+        f.write(sorted_words[i][0] + " --> " + sorted_words[i][1])
+        f.write(os.linesep)
+
+    f.write(os.linesep)
+
+    # Write out the subdomains explored in ics.uci.edu
+    f.write("Subdomains explored in *.ics.uci.edu:")
+    f.write(os.linesep)
+
+    # List each subdomain and the number of paths at that subdomain
+    subdomains = compute_subdomain_visits("ics.uci.edu")
+    for s in subdomains:
+        f.write(s[0] + " --> " + s[1])
+        f.write(os.linesep)
+
+    f.write(os.linesep)
+
+    f.close()

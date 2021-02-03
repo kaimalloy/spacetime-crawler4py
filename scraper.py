@@ -57,18 +57,18 @@ def extract_next_links(url, resp, logger):
         if 200 <= num_words < 90000:
             # Create the fingerprint of the website
             fingerprint = simhash(words)
-            logger.info("SCRAPER - Generated fingerprint for url", url, ":", fingerprint)
+            logger.info("SCRAPER - Generated fingerprint for url " + url + ": " + fingerprint)
 
             for fprint in web_fingerprints:
                 # If this website is too similar to another website in the list,
                 # return an empty list of links
                 if bitwise_similarity(fingerprint, fprint) > 0.95:
                     web_fingerprints.append(fingerprint)
-                    logger.info("SCRAPER - SKIPPED website", url,
-                                "because it was too similar to a website that was already crawled")
+                    logger.info("SCRAPER - SKIPPED website " + url +
+                                " because it was too similar to a website that was already crawled")
                     return links
 
-            logger.info("SCRAPER - SCRAPING website", url, " for the links")
+            logger.info("SCRAPER - SCRAPING website " + url + " for the links")
 
             # Loop through the words and increment the times the word occurs
             for w in words:
@@ -83,7 +83,7 @@ def extract_next_links(url, resp, logger):
             if num_words > largest_webpage[1]:
                 largest_webpage[0] = url
                 largest_webpage[1] = num_words
-                logger.info("SCRAPER - updating largest website to", url, "with", num_words, "words")
+                logger.info("SCRAPER - updating largest website to " + url + " with " + str(num_words) + " words")
 
             # Append the fingerprint to the list
             web_fingerprints.append(fingerprint)
@@ -99,9 +99,10 @@ def extract_next_links(url, resp, logger):
                     if href not in urls_visited:
                         links.append(href)
         else:
-            logger.info("SCRAPER - SKIPPED website", url, "because the website was either too big or too small")
+            logger.info("SCRAPER - SKIPPED website " + url + " because the website was either too big or too small")
     else:
-        logger.info("SCRAPER - SKIPPED website", url, "because the server returned error code <" + resp.status + ">")
+        logger.info("SCRAPER - SKIPPED website " + url + " because the server returned error code <"
+                    + resp.status + ">")
 
     return links
 

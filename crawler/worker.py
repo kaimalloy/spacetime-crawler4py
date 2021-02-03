@@ -42,5 +42,6 @@ class Worker(Thread):
                 time.sleep(self.config.time_delay)
             except Exception:
                 # If the crawler runs into any exception, spit out the final report before re-raising the exception
+                self.logger("Worker caught an exception. Generating final report before exit.")
                 final_report()
                 raise

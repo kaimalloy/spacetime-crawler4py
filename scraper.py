@@ -235,7 +235,7 @@ def compute_subdomain_visits(domain):
                 visits[parsed.hostname] = 1
 
     # [ (acar.ics.uci.edu, 4) , (bell.ics.uci.edu, 6) ]
-    return sorted(visits)
+    return sorted(visits.items())
 
 def final_report():
     f = open("report.txt", "w")
@@ -259,7 +259,7 @@ def final_report():
     f.write(os.linesep)
 
     # Sort the list by the values, and output the first 50
-    sorted_words = sorted(words_found.items(), key=lambda kv: kv[1])
+    sorted_words = sorted(words_found.items(), key=lambda kv: kv[1], reverse=True)
     for i in range(50):
         f.write(f"{sorted_words[i][0]} --> {sorted_words[i][1]}")
         f.write(os.linesep)
